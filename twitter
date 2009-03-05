@@ -1,0 +1,55 @@
+#!/usr/bin/ruby
+require 'rubygems'
+require 'twitter'
+require 'htmlentities'
+require 'optparse'
+require 'ostruct'
+
+NUM_TWEETS = 15 #number of tweets to show
+
+class TwitterOpts
+  def self.parse(args)
+    options = OpenStruct.new
+    options.linebreaks = 2
+    options.who = :friends
+    
+    opts = OptionParser.new do |opts|
+      
+      opts.on("-u", "--username [login]",
+      "Login to twitter with username login") do |login|
+        options.login = login
+      end
+      
+      opts.on("-p", "--password [pass]",
+      "Login to twitter with password pass") do |pass|
+        options.pass = pass
+      end
+      
+      opts.on("-l", "--line-breaks [BREAKS]", Float, "Insert BREAKS linebreaks between each tweet") do |breaks|
+        options.linebreaks = breaks
+      end
+      
+      opts.on("-w", "--who [who]", ["everybody","me",:friends],
+      "Select which tweets to show (public, mine, friends)") do |who|
+        who =   case who
+                  when "me" then :user
+                  when "everybody" then :public
+                end if who.class == String
+        options.who = who
+      end
+      
+    end #opts
+    opts.parse!(args)
+    options
+  end #parse()
+end #class TwitterOpts
+
+options = TwitterOpts.parse(ARGV)
+twit = Twitter::Base.new(options.login,options.pass)
+decoder = HTMLEntities.new
+newest_tweets = twit.timeline(options.who).select{|tweet| DateTime.parse(tweet.created_at) >= (DateTime.now-1)}[0,NUM_TWEETS]
+
+puts "Twitter Timeline" + ("\n"*options.linebreaks)
+for tweet in newest_tweets
+	printf "%s: %s#{"\n"*options.linebreaks}",tweet.user.screen_name,decoder.decode(tweet.text)
+end

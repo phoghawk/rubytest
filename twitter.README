@@ -1,0 +1,7 @@
+TO INSTALL:
+gem install 'twitter'
+gem install 'htmlentities'
+
+TO RUN
+cd /path/to/twitter
+./twitter
